@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Look At Me | Official Store</title>
+    <style>
+        /* --- Reset & Base --- */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1a1a1a;
+            color: #fff;
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Mincho ProN", serif;
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        /* --- Custom Cursor --- */
+        #cursor-ring {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(255, 255, 0, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s, background-color 0.2s;
+            mix-blend-mode: difference;
+        }
+
+        body.is-clicking #cursor-ring {
+            width: 20px;
+            height: 20px;
+            background-color: rgba(255, 255, 0, 0.8);
+        }
+
+        /* --- Canvas (Background) --- */
+        #background-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* --- Layout Container --- */
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            min-height: 200vh; 
+        }
+
+        /* --- Hero Section (Concept) --- */
+        .hero-section {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Courier New', sans-serif;
+            font-size: clamp(3rem, 8vw, 6rem);
+            letter-spacing: 0.2em;
+            margin: 0;
+            text-transform: uppercase;
+            mix-blend-mode: exclusion;
+            position: relative;
+        }
+
+        h1::before, h1::after {
+            content: "LOOK AT ME";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a1a;
+            opacity: 0.8;
+        }
+
+        h1::before {
+            color: #ff00de;
+            z-index: -1;
+            animation: glitch-anim-1 2.5s infinite linear alternate-reverse;
+        }
+
+        h1::after {
+            color: #00ff00;
+            z-index: -2;
+            animation: glitch-anim-2 3s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim-1 {
+            0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 0); }
+            20% { clip-path: inset(60% 0 10% 0); transform: translate(2px, 0); }
+            40% { clip-path: inset(40% 0 50% 0); transform: translate(-2px, 0); }
+            60% { clip-path: inset(80% 0 5% 0); transform: translate(2px, 0); }
+            80% { clip-path: inset(10% 0 70% 0); transform: translate(-2px, 0); }
+            100% { clip-path: inset(30% 0 20% 0); transform: translate(2px, 0); }
+        }
+
+        @keyframes glitch-anim-2 {
+            0% { clip-path: inset(10% 0 60% 0); transform: translate(2px, 0); }
+            20% { clip-path: inset(30% 0 20% 0); transform: translate(-2px, 0); }
+            40% { clip-path: inset(70% 0 10% 0); transform: translate(2px, 0); }
+            60% { clip-path: inset(20% 0 50% 0); transform: translate(-2px, 0); }
+            80% { clip-path: inset(50% 0 30% 0); transform: translate(2px, 0); }
+            100% { clip-path: inset(0% 0 80% 0); transform: translate(-2px, 0); }
+        }
+
+        .concept-text {
+            font-family: "Yu Mincho", "YuMincho", serif;
+            font-size: clamp(1rem, 2vw, 1.2rem);
+            line-height: 2.5;
+            margin-top: 2rem;
+            opacity: 0.9;
+            mix-blend-mode: exclusion;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            opacity: 0.5;
+            animation: blink 2s infinite;
+        }
+
+        /* --- Shop Section --- */
+        .shop-section {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 50px 20px;
+            backdrop-filter: blur(2px);
+        }
+
+        .product-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border-radius: 4px;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 0, 0.3);
+        }
+
+        .product-visual {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: #444;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+        
+        .peephole {
+            width: 30%;
+            height: 30%;
+            background: #000;
+            clip-path: polygon(20% 0%, 100% 0, 100% 100%, 0% 100%, 0 20%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .inner-light {
+            width: 60%;
+            height: 60%;
+            background: #ffff00;
+            box-shadow: 0 0 20px #ffff00;
+            animation: pulse 4s infinite ease-in-out;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%); 
+        }
+
+        .product-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: left;
+        }
+
+        .product-cat {
+            font-size: 0.8rem;
+            color: #ffff00;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+
+        .product-name {
+            font-size: 2.5rem;
+            margin: 0 0 20px 0;
+            font-family: "Yu Mincho", serif;
+            font-weight: normal;
+        }
+
+        .product-price {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .product-desc {
+            font-size: 0.9rem;
+            line-height: 1.8;
+            color: #ccc;
+            margin-bottom: 40px;
+            border-top: 1px solid #555;
+            padding-top: 20px;
+        }
+
+        .buy-btn {
+            background: transparent;
+            color: #ffff00;
+            border: 1px solid #ffff00;
+            padding: 15px 40px;
+            font-size: 1rem;
+            cursor: none;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .buy-btn:hover {
+            background: #ffff00;
+            color: #000;
+            box-shadow: 0 0 30px rgba(255, 255, 0, 0.5);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; transform: scale(0.95); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
+        @media (max-width: 768px) {
+            .product-card {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+            .product-name {
+                font-size: 2rem;
+            }
+            body, html, .buy-btn {
+                cursor: auto;
+            }
+            #cursor-ring {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="cursor-ring"></div>
+
+    <canvas id="background-canvas"></canvas>
+
+    <div class="container">
+        <section class="hero-section">
+            <h1 title="Look At Me">Look At Me</h1>
+            <div class="concept-text">
+                <p>見られる私より、味わう私。</p>
+                <p style="font-size: 0.8em; margin-top: 30px;">I Look At Me.<br>私が、私を見る。</p>
+            </div>
+            <div class="scroll-indicator">CLICK THE LIGHT / SCROLL DOWN</div>
+        </section>
+
+        <section class="shop-section">
+            <div class="product-card">
+                <div class="product-visual">
+                    <div class="peephole">
+                        <div class="inner-light"></div>
+                    </div>
+                </div>
+
+                <div class="product-info">
+                    <span class="product-cat">CONCEPT SWEETS</span>
+                    <h2 class="product-name">食べる宝石<br>琥珀糖 "Shard"</h2>
+                    <div class="product-price">¥ 2,800 <span style="font-size:0.6em; color:#888;">(+tax)</span></div>
+                    
+                    <p class="product-desc">
+                        誰かのために光るのではなく、自分のために光を取り込む。<br>
+                        外箱の小さなスリットから覗くのは、<br>
+                        あなた自身の中に眠る、鋭利で純粋な輝きです。<br>
+                        <br>
+                        フレーバー：レモン / プレーン<br>
+                        内容量：12粒
+                    </p>
+
+                    <a href="#" class="buy-btn" onclick="triggerExplosion(window.innerWidth/2, window.innerHeight/2)">
+                        光を取り込む<br>
+                        <span style="font-size:0.7em;">PURCHASE</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('background-canvas');
+        const ctx = canvas.getContext('2d');
+        const cursorRing = document.getElementById('cursor-ring');
+        
+        let width, height;
+        let mouseX = -1000;
+        let mouseY = -1000;
+        
+        const shards = [];
+        const particles = [];
+        const shardCount = 60;
+
+        // Class: Shard
+        class Shard {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.size = Math.random() * 30 + 5; 
+                this.rotation = Math.random() * Math.PI * 2;
+                this.color = Math.random() > 0.85 ? '#ffffff' : '#ffff00'; 
+                this.points = [];
+                this.speedX = (Math.random() - 0.5) * 0.2;
+                this.speedY = (Math.random() - 0.5) * 0.2;
+                
+                const sides = Math.floor(Math.random() * 3) + 3; 
+                for (let i = 0; i < sides; i++) {
+                    const angle = (i / sides) * Math.PI * 2;
+                    const r = this.size * (0.5 + Math.random() * 0.5);
+                    this.points.push({
+                        x: Math.cos(angle) * r,
+                        y: Math.sin(angle) * r
+                    });
+                }
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if(this.x < -50) this.x = width + 50;
+                if(this.x > width + 50) this.x = -50;
+                if(this.y < -50) this.y = height + 50;
+                if(this.y > height + 50) this.y = -50;
+            }
+
+            draw(context) {
+                context.save();
+                context.translate(this.x, this.y);
+                context.rotate(this.rotation);
+                context.beginPath();
+                context.moveTo(this.points[0].x, this.points[0].y);
+                for (let i = 1; i < this.points.length; i++) {
+                    context.lineTo(this.points[i].x, this.points[i].y);
+                }
+                context.closePath();
+                context.fillStyle = this.color;
+                context.fill();
+                context.restore();
+            }
+        }
+
+        // Class: Particle
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 5 + 1;
+                this.speedX = (Math.random() - 0.5) * 10;
+                this.speedY = (Math.random() - 0.5) * 10;
+                this.life = 1.0;
+                this.color = Math.random() > 0.5 ? '#ffff00' : '#ffffff';
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.life -= 0.02;
+                this.speedX *= 0.95;
+                this.speedY *= 0.95;
+            }
+
+            draw(context) {
+                context.save();
+                context.globalAlpha = this.life;
+                context.fillStyle = this.color;
+                context.beginPath();
+                context.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                context.fill();
+                context.restore();
+            }
+        }
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            
+            shards.length = 0;
+            for(let i=0; i<shardCount; i++) {
+                shards.push(new Shard());
+            }
+        }
+
+        function animate() {
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, width, height);
+
+            shards.forEach(shard => {
+                shard.update();
+                
+                const dx = shard.x - mouseX;
+                const dy = shard.y - mouseY;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                const visibleRadius = 300;
+                let alpha = 0;
+                if (dist < visibleRadius) {
+                    alpha = 1 - (dist / visibleRadius);
+                }
+                alpha *= (0.8 + Math.random() * 0.2);
+
+                if (alpha > 0) {
+                    ctx.globalAlpha = alpha;
+                    shard.draw(ctx);
+                }
+            });
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                p.draw(ctx);
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        function triggerExplosion(x, y) {
+            for (let i = 0; i < 30; i++) {
+                particles.push(new Particle(x, y));
+            }
+        }
+
+        window.addEventListener('resize', resize);
+        
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            cursorRing.style.left = mouseX + 'px';
+            cursorRing.style.top = mouseY + 'px';
+        });
+
+        window.addEventListener('mousedown', (e) => {
+            document.body.classList.add('is-clicking');
+            triggerExplosion(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('mouseup', () => {
+            document.body.classList.remove('is-clicking');
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            mouseX = e.touches[0].clientX;
+            mouseY = e.touches[0].clientY;
+        }, {passive: true});
+        
+        window.addEventListener('touchstart', (e) => {
+            const tx = e.touches[0].clientX;
+            const ty = e.touches[0].clientY;
+            mouseX = tx;
+            mouseY = ty;
+            triggerExplosion(tx, ty);
+        }, {passive: true});
+
+        resize();
+        animate();
+
+    </script>
+</body>
+</html>
